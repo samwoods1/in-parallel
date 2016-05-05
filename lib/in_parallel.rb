@@ -167,7 +167,6 @@ class InParallel
       include ::Kernel
 
       def initialize(obj)
-        # Supporting both run_in_parallel (methods_in_parallel) and run_in_background (!methods_in_parallel)
         @object = obj
         @result_id = 0
       end
