@@ -57,7 +57,7 @@ class InParallel
     # # Otherwise use run_in_background(true) to clean up the process status and output immediately.
     # Parrallel.get_background_results(self)
     # NOTE: must call get_background_results to allow instance variables in calling object to be set,
-    # otherwise @result will evaluate to "result_incomplete_0"
+    # otherwise @result will evaluate to "unresolved_parallel_result_0"
     def self.run_in_background(ignore_result = true, &block)
       if @@supported
         proxy = BlankBindingParallelProxy.new(self)
@@ -154,7 +154,7 @@ class InParallel
               :method_sym => method_sym,
               :std_out => read_io,
               :result => read_result,
-              :tmp_result => "result_incomplete_#{@@result_id}" }
+              :tmp_result => "unresolved_parallel_result_#{@@result_id}" }
       @@outs.push(out)
       @@result_id += 1
       out

@@ -90,7 +90,7 @@ hello world, bar
   }
   
   # @result has not been assigned yet
-  puts @result >> "result_incomplete_0"
+  puts @result >> "unresolved_parallel_result_0"
   
   # This assigns all instance variables within the block and writes STDOUT and STDERR from the process to console.
   InParallel.get_background_results
