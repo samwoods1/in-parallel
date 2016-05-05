@@ -73,10 +73,10 @@ hello world, bar
   }
   
   # Should not exist immediately upon block completion
-  puts(File.exists?(TMP_FILE))
+  puts(File.exists?(TMP_FILE)) # false
   sleep(3)
   # Should exist once the delay from create_file_with_delay is done
-  puts(File.exists?(TMP_FILE))
+  puts(File.exists?(TMP_FILE)) # true
   
   # Example 2 - delay results
   InParallel.run_in_background(false){
@@ -94,8 +94,8 @@ hello world, bar
   
   # This assigns all instance variables within the block and writes STDOUT and STDERR from the process to console.
   InParallel.get_background_results
-  puts @result >> "true"
-  puts @result2 >> "true"
+  puts @result # true
+  puts @result2 # true
   
 ```
 
