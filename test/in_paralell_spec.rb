@@ -84,4 +84,17 @@ describe '.each_in_parallel' do
     # time should be less than combined delay in the 3 block calls
     expect(expect(Time.now - start_time).to be < 3)
   end
+
+  it 'should run each iteration of a map in parallel' do
+    start_time = Time.now
+    items = ['foo', 'bar', 'baz'].map.each_in_parallel {|item|
+      sleep 1
+      puts item
+      item
+    }
+    # return values should be an array of the returned items in the last line of the block
+    expect(items <=> ['foo', 'bar', 'baz']).to eq 0
+    # time should be less than combined delay in the 3 block calls
+    expect(expect(Time.now - start_time).to be < 3)
+  end
 end

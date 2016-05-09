@@ -1,9 +1,9 @@
-# Monkey patching Array to make it easy to do any .each in parallel
+# Monkey patching Enumerable to make it easy to do any .each in parallel
 # Example - Will run puppet agent -t on each agent in parallel:
 # agents.each_in_parallel { |agent|
 #   on agent, 'puppet agent -t'
 # }
-class Array
+module Enumerable
   def each_in_parallel(&block)
     if Process.respond_to?(:fork)
       method_sym = "#{caller_locations[0]}"

@@ -1,4 +1,4 @@
-require_relative 'array'
+require_relative 'enumerable'
 
 class InParallel
    @@supported = Process.respond_to?(:fork)
