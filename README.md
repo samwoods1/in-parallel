@@ -99,8 +99,8 @@ hello world, bar
   
 ```
 
-### Array.each_in_parallel(&block)
-1. This is very similar to other solutions, except that it directly extends the Array class with an each_in_parallel method, giving you the ability to pretty simply spawn a process for any item in an array.
+### Enumerable.each_in_parallel(&block)
+1. This is very similar to other solutions, except that it directly extends the Enumerable class with an each_in_parallel method, giving you the ability to pretty simply spawn a process for any item in an array or map.
 2. Identifies the block location (or caller location if the block does not have a source_location) in the console log to make it clear which block is being executed
 
 ```ruby
