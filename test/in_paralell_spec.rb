@@ -3,6 +3,23 @@ require_relative('../lib/in_parallel')
 
 TMP_FILE = '/tmp/test_file.txt'
 
+class SingletonTest
+  def initialize
+    @test_data = [1, 2, 3]
+  end
+  def get_test_data
+    @test_data
+  end
+end
+
+def get_singleton_class
+  test = SingletonTest.new
+  def test.someval
+    "someval"
+  end
+  return test
+end
+
 # Helper functions for the unit tests
 def method_with_param(param)
   puts "foo"
@@ -39,6 +56,15 @@ describe '.run_in_parallel' do
     expect(@result_from_test).to eq 'bar + blah'
     # should be able to return objects (not just strings)
     expect(@result_2).to eq({:foo => "bar"})
+  end
+
+  it "should return a singleton class value" do
+
+    InParallel.run_in_parallel{
+      @result = get_singleton_class
+    }
+
+    expect(@result.get_test_data).to eq([1, 2, 3])
   end
 
 end
@@ -97,4 +123,5 @@ describe '.each_in_parallel' do
     # time should be less than combined delay in the 3 block calls
     expect(expect(Time.now - start_time).to be < 3)
   end
+
 end

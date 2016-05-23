@@ -1,4 +1,4 @@
-require_relative 'enumerable'
+require_relative 'parallel_enumerable'
 
 class InParallel
    @@supported = Process.respond_to?(:fork)
@@ -103,7 +103,8 @@ class InParallel
           puts "\n------ Begin output for #{out[:method_sym]} - #{out[:pid]}\n"
           puts out[:std_out].readlines
           puts "------ Completed output for #{out[:method_sym]} - #{out[:pid]}\n"
-          results_map[out[:tmp_result]] = Marshal.load(out[:result].read)
+          result = out[:result].read
+          results_map[out[:tmp_result]] = Marshal.load(result) unless result.nil? || result.empty?
         ensure
           # close the read end pipes
           out[:std_out].close unless out[:std_out].closed?
@@ -137,7 +138,10 @@ class InParallel
           ret_val = obj.instance_eval(&block)
           # Write the result to the write_result IO stream.
           # Have to serialize the value so it can be transmitted via IO
-          Marshal.dump(ret_val, write_result)
+          if(ret_val.singleton_methods && ret_val.class != TrueClass && ret_val.class != FalseClass)
+            ret_val = ret_val.dup
+          end
+          Marshal.dump(ret_val, write_result) unless ret_val.nil?
         rescue SystemCallError => err
           puts "error: #{err.message}"
           write_io.write('.')
