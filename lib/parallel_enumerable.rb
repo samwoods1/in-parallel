@@ -5,7 +5,7 @@
 # }
 module Enumerable
   def each_in_parallel(method_sym=nil, &block)
-    if Process.respond_to?(:fork) && size > 1
+    if Process.respond_to?(:fork) && count > 1
       method_sym ||= "#{caller_locations[0]}"
       each do |item|
         out = InParallel._execute_in_parallel(method_sym) {block.call(item)}

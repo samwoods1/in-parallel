@@ -10,15 +10,17 @@ Gem::Specification.new do |spec|
   spec.email         = ["sam.woods@puppetlabs.com"]
 
   spec.summary       = "A lightweight library to execute a handful of tasks in parallel with simple syntax"
-  spec.description   = "I know there are other libraries that do parallelization, but I wanted something very " +
-      "simple to consume, and this was fun. I plan on using this within a test framework to enable parallel " +
-      "execution of some of the framework's tasks, and allow people within thier tests to execute code in " +
-      "parallel when wanted. This solution does not check to see how many processors you have, it just forks " +
-      "as many processes as you ask for. That means that it will handle a handful of parallel processes well, " +
-      "but could definitely overload your system with ruby processes if you try to spin up a LOT of processes. " +
-      "If you're looking for something simple and light-weight and on either linux or mac, then this solution " +
-      "could be what you want. If you are looking for something a little more production ready, you should take " +
-      "a look at the parallel project."
+  spec.description   = "The other Ruby librarys that do parallel execution all support one primary use case " +
+      "- crunching through a large queue of small tasks as quickly and efficiently as possible. This library " +
+      "primarily supports the use case of needing to run a few larger tasks in parallel and managing the " +
+      "stdout to make it easy to understand which processes are logging what. This library was created to be " +
+      "used by the Beaker test framework to enable parallel execution of some of the framework's tasks, and " +
+      "allow people within thier tests to execute code in parallel when wanted. This solution does not check " +
+      "to see how many processors you have, it just forks as many processes as you ask for. That means that it " +
+      "will handle a handful of parallel processes well, but could definitely overload your system with ruby " +
+      "processes if you try to spin up a LOT of processes. If you're looking for something simple and " +
+      "light-weight and on either linux or mac (forking processes is not supported on Windows), then this " +
+      "solution could be what you want."
   spec.homepage      = "https://github.com/samwoods1/in-parallel"
   spec.license       = "MIT"
 
