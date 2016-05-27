@@ -1,9 +1,9 @@
 # in-parallel
 A lightweight Ruby library with very simple syntax, making use of process.fork for parallelization
 
-I know there are other libraries that do parallelization, but I wanted something very simple to consume, and this was fun. I plan on using this within a test framework to enable parallel execution of some of the framework's tasks, and allow people within thier tests to execute code in parallel when wanted.  This solution does not check to see how many processors you have, it just forks as many processes as you ask for.  That means that it will handle a handful of parallel processes well, but could definitely overload your system with ruby processes if you try to spin up a LOT of processes.  If you're looking for something simple and light-weight and on either linux or mac, then this solution could be what you want.
+The other Ruby librarys that do parallel execution all support one primary use case - crunching through a large queue of small tasks as quickly and efficiently as possible.  This library primarily supports the use case of needing to run a few larger tasks in parallel and managing the stdout to make it easy to understand which processes are logging what. This library was created to be used by the Beaker test framework to enable parallel execution of some of the framework's tasks, and allow people within thier tests to execute code in parallel when wanted.  This solution does not check to see how many processors you have, it just forks as many processes as you ask for.  That means that it will handle a handful of parallel processes well, but could definitely overload your system with ruby processes if you try to spin up a LOT of processes.  If you're looking for something simple and light-weight and on either linux or mac (forking processes is not supported on Windows), then this solution could be what you want.
 
-If you are looking for something a little more production ready, you should take a look at the [parallel](https://github.com/grosser/parallel) project.
+If you are looking for something a little more production ready, you should take a look at the [parallel](https://github.com/grosser/parallel) project.  In the future this library will extend the in the parallel gem to take advantage of all of it's useful features as well.
 
 ## Methods:
 
@@ -99,8 +99,8 @@ hello world, bar
   
 ```
 
-### Array.each_in_parallel(&block)
-1. This is very similar to other solutions, except that it directly extends the Array class with an each_in_parallel method, giving you the ability to pretty simply spawn a process for any item in an array.
+### Enumerable.each_in_parallel(&block)
+1. This is very similar to other solutions, except that it directly extends the Enumerable class with an each_in_parallel method, giving you the ability to pretty simply spawn a process for any item in an array or map.
 2. Identifies the block location (or caller location if the block does not have a source_location) in the console log to make it clear which block is being executed
 
 ```ruby

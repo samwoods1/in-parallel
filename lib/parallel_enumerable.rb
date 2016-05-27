@@ -4,9 +4,9 @@
 #   on agent, 'puppet agent -t'
 # }
 module Enumerable
-  def each_in_parallel(&block)
-    if Process.respond_to?(:fork)
-      method_sym = "#{caller_locations[0]}"
+  def each_in_parallel(method_sym=nil, &block)
+    if Process.respond_to?(:fork) && size > 1
+      method_sym ||= "#{caller_locations[0]}"
       each do |item|
         out = InParallel._execute_in_parallel(method_sym) {block.call(item)}
         puts "'each_in_parallel' forked process for '#{method_sym}' - PID = '#{out[:pid]}'\n"
@@ -14,7 +14,7 @@ module Enumerable
       # return the array of values, no need to look up from the map.
       return InParallel.wait_for_processes.values
     end
-    puts 'Warning: Fork is not supported on this OS, executing block normally'
+    puts 'Warning: Fork is not supported on this OS, executing block normally' unless Process.respond_to? :fork
     block.call
     each(&block)
   end
