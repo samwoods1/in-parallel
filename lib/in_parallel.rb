@@ -97,7 +97,7 @@ class InParallel
   def self.wait_for_processes
     trap(:INT) do
       puts "Warning, recieved interrupt.  Processing child results and exiting."
-      @@proces_infos.each { |process_info|
+      @@process_infos.each { |process_info|
         # Send INT to each child process so it returns and can print stdout and stderr to console before exiting.
         Process.kill("INT", process_info[:pid])
       }
@@ -183,13 +183,21 @@ class InParallel
         # Write the result to the write_result IO stream.
         # Have to serialize the value so it can be transmitted via IO
         if(!ret_val.nil? && ret_val.singleton_methods && ret_val.class != TrueClass && ret_val.class != FalseClass && ret_val.class != Fixnum)
+          #in case there are other types that can't be duped
           begin
           ret_val = ret_val.dup
           rescue StandardError => err
-            #in case there are other types that can't dup
+            puts "Warning: return value from child process #{ret_val} " +
+                     "could not be transferred to parent process: #{err.message}"
           end
         end
-        Marshal.dump(ret_val, write_result) unless ret_val.nil?
+        # In case there are other types that can't be dumped
+        begin
+          Marshal.dump(ret_val, write_result) unless ret_val.nil?
+        rescue StandardError => err
+          puts "Warning: return value from child process #{ret_val} " +
+                   "could not be transferred to parent process: #{err.message}"
+        end
       rescue StandardError => err
         puts "Error in process #{pid}: #{err.message}"
         # Return the error if an error is rescued so we can re-throw in the main process.
