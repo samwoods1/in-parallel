@@ -171,13 +171,13 @@ module InParallel
       ret_val = nil
       # Communicate the return value of the method or block
       read_result, write_result = IO.pipe
+      Dir.mkdir('tmp') unless Dir.exists? 'tmp'
       pid = fork do
         exit_status = 0
         trap(:INT) do
           puts("Warning: Interrupt received in child process; exiting #{Process.pid}")
           return
         end
-        Dir.mkdir('tmp') unless Dir.exists? 'tmp'
         write_file = File.new("tmp/parallel_process_#{Process.pid}", 'w')
 
         # IO buffer is 64kb, which isn't much... if debug logging is turned on,
