@@ -8,11 +8,11 @@ module Enumerable
     if Process.respond_to?(:fork) && count > 1
       method_sym ||= "#{caller_locations[0]}"
       each do |item|
-        out = InParallel._execute_in_parallel(method_sym) {block.call(item)}
+        out = InParallelExecutor._execute_in_parallel(method_sym) {block.call(item)}
         puts "'each_in_parallel' forked process for '#{method_sym}' - PID = '#{out[:pid]}'\n"
       end
       # return the array of values, no need to look up from the map.
-      return InParallel.wait_for_processes.values
+      return InParallel.wait_for_processes
     end
     puts 'Warning: Fork is not supported on this OS, executing block normally' unless Process.respond_to? :fork
     block.call
