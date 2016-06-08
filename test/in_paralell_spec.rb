@@ -1,6 +1,6 @@
 require 'rspec'
 require_relative('../lib/in_parallel')
-
+include InParallel
 TMP_FILE = '/tmp/test_file.txt'
 
 class SingletonTest
@@ -53,8 +53,12 @@ end
 
 #Tests
 describe '.run_in_parallel' do
+  before do
+    File.delete(TMP_FILE) if File.exists?(TMP_FILE)
+  end
+
   it 'should run methods in another process' do
-    InParallel.run_in_parallel{
+    run_in_parallel{
       @result = get_pid
       @result2 = get_pid
     }
@@ -66,7 +70,7 @@ describe '.run_in_parallel' do
   it 'should return correct values' do
     start_time = Time.now
 
-    InParallel.run_in_parallel{
+    run_in_parallel{
       @result_from_test = method_with_param('blah')
       @result_2 = method_without_param
     }
@@ -78,24 +82,27 @@ describe '.run_in_parallel' do
 
   it "should return a singleton class value" do
 
-    InParallel.run_in_parallel{
+    run_in_parallel{
       @result = get_singleton_class
     }
 
     expect(@result.get_test_data).to eq([1, 2, 3])
   end
 
-  it "should raise an exception if one of the processes errors." do
-    expect{InParallel.run_in_parallel{
+  it "should raise an exception and return immediately if one of the processes errors." do
+    expect{run_in_parallel{
       @result = get_singleton_class
       @result_2 = raise_an_error
+      @result_3 = create_file_with_delay(TMP_FILE)
     }}.to raise_error StandardError
+
+    expect(@result3).to_not eq(true)
   end
 
   it "should not run in parallel if forking is not supported" do
     expect(Process).to receive( :respond_to? ).with( :fork ).and_return( false ).once
 
-    expect {InParallel.run_in_parallel{
+    expect {run_in_parallel{
       @result_from_test = method_with_param('blah')
       @result_2 = get_pid
     }}.to output(/Warning: Fork is not supported on this OS, executing block normally/).to_stdout
@@ -105,7 +112,7 @@ describe '.run_in_parallel' do
   end
 
   # it "should chunk stdout per process" do
-  #   expect {InParallel.run_in_parallel {
+  #   expect {run_in_parallel {
   #     simple_puts('foobar')
   #   }}.to output(/------ Begin output for simple_puts.*foobar.*------ Completed output for simple_puts/).to_stdout
   # end
@@ -117,7 +124,7 @@ describe '.run_in_background' do
   end
 
   it 'should run in the background' do
-    InParallel.run_in_background{
+    run_in_background{
       @result = create_file_with_delay(TMP_FILE)
     }
 
@@ -129,10 +136,10 @@ describe '.run_in_background' do
   end
 
   it 'should allow you to get results if ignore_results is false' do
-    @block_result = InParallel.run_in_background(false){
+    @block_result = run_in_background(false){
       @result = create_file_with_delay(TMP_FILE)
     }
-    InParallel.get_background_results
+    wait_for_processes
     # We should get the correct value assigned for the method result
     expect(@result).to eq true
   end
