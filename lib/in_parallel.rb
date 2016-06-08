@@ -40,6 +40,8 @@ module InParallel
     # Private method to lookup results from the results_map and replace the
     # temp values with actual return values
     def self.result_lookup(proxy_obj, target_obj, results_map)
+      target_obj = eval('self', target_obj)
+      proxy_obj ||= target_obj
       vars = (proxy_obj.instance_variables)
       results = []
       results_map.keys.each { |tmp_result|
@@ -76,7 +78,7 @@ module InParallel
           Process.detach(@@process_infos.last[:pid])
           @@process_infos.pop
         else
-          @@background_objs << {:proxy => proxy, :target => eval("self", block.binding)}
+          @@background_objs << {:proxy => proxy, :target => block.binding}
           return process_infos.last[:tmp_result]
         end
         return
@@ -154,11 +156,12 @@ module InParallel
       # pass in the 'self' from the block.binding which is the instance of the class
       # that contains the initial binding call.
       # This gives us access to the local and instance variables from that context.
-      results = result_lookup(proxy, eval("self", binding), results_map) if proxy && binding
+      results = result_lookup(proxy, binding, results_map) if binding
 
       @@background_objs.each {|obj|
          results = results.concat result_lookup(obj[:proxy], obj[:target], results_map)
       }
+      @@background_objs.clear
 
       return results
     end
