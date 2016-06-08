@@ -89,7 +89,7 @@ module InParallel
 
     # Waits for all processes to complete and logs STDOUT and STDERR in chunks from any processes
     # that were triggered from this Parallel class
-    def self.wait_for_processes(proxy = nil, binding = nil)
+    def self.wait_for_processes(proxy = self, binding = nil)
       trap(:INT) do
         puts "Warning, recieved interrupt.  Processing child results and exiting."
         @@process_infos.each { |process_info|
