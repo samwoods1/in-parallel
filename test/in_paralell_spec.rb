@@ -37,8 +37,8 @@ def simple_puts(my_string)
   puts my_string
 end
 
-def create_file_with_delay(file_path)
-  sleep 1
+def create_file_with_delay(file_path, wait=1)
+  sleep wait
   File.open(file_path, 'w') { |f| f.write('contents')}
   return true
 end
@@ -89,14 +89,24 @@ describe '.run_in_parallel' do
     expect(@result.get_test_data).to eq([1, 2, 3])
   end
 
-  it "should raise an exception and return immediately if one of the processes errors." do
-    expect{run_in_parallel{
+  it "should raise an exception and return immediately with kill_all_on_error and one of the processes errors." do
+    expect{run_in_parallel(nil, true){
       @result = get_singleton_class
       @result_2 = raise_an_error
       @result_3 = create_file_with_delay(TMP_FILE)
     }}.to raise_error StandardError
 
-    expect(@result3).to_not eq(true)
+    expect(@result_3).to_not eq(true)
+  end
+
+  it "should raise an exception and let all processes complete when one of the processes errors." do
+    expect{run_in_parallel(nil, false){
+      @result = get_singleton_class
+      @result_2 = raise_an_error
+      @result_3 = create_file_with_delay(TMP_FILE)
+    }}.to raise_error StandardError
+
+    expect(@result_3).to eq(true)
   end
 
   it "should not run in parallel if forking is not supported" do
@@ -144,6 +154,28 @@ describe '.run_in_background' do
     expect(@result).to eq true
   end
 
+end
+
+describe '.wait_for_processes' do
+  after do
+    puts "got to after"
+    InParallel::InParallelExecutor.timeout = 1200
+  end
+  it 'should timeout when the default timeout value is hit' do
+    @block_result = run_in_background(false){
+      @result = create_file_with_delay(TMP_FILE, 30)
+    }
+    InParallel::InParallelExecutor.timeout = 0.1
+    expect{wait_for_processes}.to raise_error RuntimeError
+  end
+
+  it 'should timeout when a specified timeout value is hit' do
+    @block_result = run_in_background(false){
+      @result = create_file_with_delay(TMP_FILE, 30)
+      @result2 = method_without_param
+    }
+    expect{wait_for_processes(0.1)}.to raise_error RuntimeError
+  end
 end
 
 describe '.each_in_parallel' do

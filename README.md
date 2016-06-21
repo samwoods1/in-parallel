@@ -1,19 +1,20 @@
 # in-parallel
 A lightweight Ruby library with very simple syntax, making use of process.fork for parallelization
 
-Other popular Ruby librarys that do parallel execution support one primary use case - crunching through a large queue of small tasks as quickly and efficiently as possible.  This library primarily supports the use case of executing a few larger tasks in parallel and managing the stdout and return values to make it easy to understand which processes are logging what, and what the outcome of the execution was. This library was created to be used by Puppet's Beaker test framework to enable parallel execution of some of the framework's tasks, and allow people within thier tests to execute code in parallel when wanted.  This solution does not check to see how many processors you have, it just forks as many processes as you ask for.  That means that it will handle a handful of parallel processes well, but could definitely overload your system with ruby processes if you try to spin up a LOT of processes.  If you're looking for something simple and light-weight and on either linux or mac (forking processes is not supported on Windows), then this solution could be what you want.
+Other popular Ruby libraries that do parallel execution support one primary use case - crunching through a large queue of small tasks as quickly and efficiently as possible.  This library primarily supports the use case of executing a few larger tasks in parallel and managing the stdout and return values to make it easy to understand which processes are logging what, and what the outcome of the execution was. This library was created to be used by Puppet's Beaker test framework to enable parallel execution of some of the framework's tasks, and allow people within thier tests to execute code in parallel when wanted.  This solution does not check to see how many processors you have, it just forks as many processes as you ask for.  That means that it will handle a handful of parallel processes well, but could definitely overload your system with ruby processes if you try to spin up a LOT of processes.  If you're looking for something simple and light-weight and on either linux or mac (forking processes is not supported on Windows), then this solution could be what you want.
 
 If you are looking for something to support executing a lot of tasks in parallel as efficiently as possible, you should take a look at the [parallel](https://github.com/grosser/parallel) project.
 
 ## Methods:
 
-### run_in_parallel(&block)
+### run_in_parallel(timeout=nil, kill_all_on_error = false, &block)
 1. You can put whatever methods you want to execute in parallel into a block, and each method will be executed in parallel (unless the method is defined in kernel). 
-  1. Any methods further down the stack won't be affected, only the ones directly within the block.  
+    1. Any methods further down the stack won't be affected, only the ones directly within the block.
 2. You can assign the results to instance variables and it just works, no dealing with an array or map of results.
 3. Log STDOUT and STDERR chunked per process to the console so that it is easy to see what happened in which process.
 4. Waits for each process in realtime and logs immediately upon completion of each process
-5. If an exception is raised by a child process, it will immediately be re-raised in the primary process and kill all other still running child processes
+5. If an exception is raised by a child process, it will optionally (kill_all_on_error) be re-raised in the primary process and kill all other still running child processes. The default will wait for all processes to complete execution before re-raising any unhandled exception from the child processes.
+6. Times out by default at 30 minutes. Timeout default can be changed with InParallel::InParallelExecutor.timeout=X, or you can set the timeout param when calling the method
 
 ```ruby
   def method_with_param(name)
@@ -53,6 +54,38 @@ hello world
 {:foo=>"bar"}
 ------ Completed output for method_without_param - 49399
 hello world, bar
+```
+
+### Enumerable.each_in_parallel(identifier=nil, timeout=(InParallel::InParallelExecutor.timeout), kill_all_on_error = false, &block)
+1. This is very similar to other solutions, except that it directly extends the Enumerable class with an each_in_parallel method, giving you the ability to pretty simply spawn a process for any item in an array or map.
+2. Identifies the block location (or caller location if the block does not have a source_location) in the console log to make it clear which block is being executed
+3. identifier param is only for logging, otherwise it will use the block source location.
+4. If an exception is raised by a child process, it will optionally (kill_all_on_error) be re-raised in the primary process and kill all other still running child processes. The default will wait for all processes to complete execution before re-raising any unhandled exception from the child processes.
+5. Times out by default at 30 minutes. Timeout default can be changed with InParallel::InParallelExecutor.timeout=X, or you can set the timeout param when calling the method
+
+```ruby
+  ["foo", "bar", "baz"].each_in_parallel { |item|
+    puts item
+  }
+
+```
+STDOUT:
+```
+'each_in_parallel' spawned process for '/Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>'' - PID = '51600'
+'each_in_parallel' spawned process for '/Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>'' - PID = '51601'
+'each_in_parallel' spawned process for '/Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>'' - PID = '51602'
+
+------ Begin output for /Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>' - 51600
+foo
+------ Completed output for /Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>' - 51600
+
+------ Begin output for /Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>' - 51601
+bar
+------ Completed output for /Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>' - 51601
+
+------ Begin output for /Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>' - 51602
+baz
+------ Completed output for /Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>' - 51602
 ```
 
 ### run_in_background(ignore_results = true, &block)
@@ -101,31 +134,7 @@ hello world, bar
   
 ```
 
-### Enumerable.each_in_parallel(&block)
-1. This is very similar to other solutions, except that it directly extends the Enumerable class with an each_in_parallel method, giving you the ability to pretty simply spawn a process for any item in an array or map.
-2. Identifies the block location (or caller location if the block does not have a source_location) in the console log to make it clear which block is being executed
-
-```ruby
-  ["foo", "bar", "baz"].each_in_parallel { |item|
-    puts |item|
-  }
-  
-```
-STDOUT:
-```
-'each_in_parallel' spawned process for '/Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>'' - PID = '51600'
-'each_in_parallel' spawned process for '/Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>'' - PID = '51601'
-'each_in_parallel' spawned process for '/Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>'' - PID = '51602'
-
------- Begin output for /Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>' - 51600
-foo
------- Completed output for /Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>' - 51600
-
------- Begin output for /Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>' - 51601
-bar
------- Completed output for /Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>' - 51601
-
------- Begin output for /Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>' - 51602
-baz
------- Completed output for /Users/samwoods/parallel_test/test.rb:77:in `block (2 levels) in <top (required)>' - 51602
-```
+### wait_for_processes(timeout=nil, kill_all_on_error = false)
+1. Used only after run_in_background with ignore_results=false
+2. Optional args for timeout and kill_all_on_error
+3. See run_in_background for examples
