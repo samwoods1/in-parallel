@@ -110,12 +110,14 @@ describe '.run_in_parallel' do
   end
 
   it "should not run in parallel if forking is not supported" do
+    InParallel::InParallelExecutor.class_variable_set(:@@supported, nil)
     expect(Process).to receive( :respond_to? ).with( :fork ).and_return( false ).once
+    expect(InParallel::InParallelExecutor.logger).to receive( :warn ).with("Warning: Fork is not supported on this OS, executing block normally")
 
-    expect {run_in_parallel{
+    run_in_parallel{
       @result_from_test = method_with_param('blah')
       @result_2 = get_pid
-    }}.to output(/Warning: Fork is not supported on this OS, executing block normally/).to_stdout
+    }
 
     expect(@result_from_test).to eq 'bar + blah'
     expect(@result_2).to eq Process.pid
@@ -159,13 +161,13 @@ end
 describe '.wait_for_processes' do
   after do
     puts "got to after"
-    InParallel::InParallelExecutor.timeout = 1200
+    InParallel::InParallelExecutor.parallel_default_timeout = 1200
   end
   it 'should timeout when the default timeout value is hit' do
     @block_result = run_in_background(false){
       @result = create_file_with_delay(TMP_FILE, 30)
     }
-    InParallel::InParallelExecutor.timeout = 0.1
+    InParallel::InParallelExecutor.parallel_default_timeout = 0.1
     expect{wait_for_processes}.to raise_error RuntimeError
   end
 
@@ -216,9 +218,12 @@ describe '.each_in_parallel' do
   end
 
   it 'should allow you to specify the method_sym' do
-    expect{[1,2,3].each_in_parallel('my_method'){|item|
+    allow(InParallel::InParallelExecutor.logger).to receive( :info ).with(anything())
+    expect(InParallel::InParallelExecutor.logger).to receive( :info ).with(/Forked process for my_method/).exactly(3).times
+
+    [1,2,3].each_in_parallel('my_method'){|item|
       puts item
-    }}.to output(/'each_in_parallel' forked process for 'my_method'/).to_stdout
+    }
   end
 
 end

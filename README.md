@@ -14,7 +14,7 @@ If you are looking for something to support executing a lot of tasks in parallel
 3. Log STDOUT and STDERR chunked per process to the console so that it is easy to see what happened in which process.
 4. Waits for each process in realtime and logs immediately upon completion of each process
 5. If an exception is raised by a child process, it will optionally (kill_all_on_error) be re-raised in the primary process and kill all other still running child processes. The default will wait for all processes to complete execution before re-raising any unhandled exception from the child processes.
-6. Times out by default at 30 minutes. Timeout default can be changed with InParallel::InParallelExecutor.timeout=X, or you can set the timeout param when calling the method
+6. Times out by default at 30 minutes. Timeout default can be changed with InParallel::InParallelExecutor.parallel_default_timeout=X, or you can set the timeout param when calling the method
 
 ```ruby
   def method_with_param(name)
@@ -61,7 +61,7 @@ hello world, bar
 2. Identifies the block location (or caller location if the block does not have a source_location) in the console log to make it clear which block is being executed
 3. identifier param is only for logging, otherwise it will use the block source location.
 4. If an exception is raised by a child process, it will optionally (kill_all_on_error) be re-raised in the primary process and kill all other still running child processes. The default will wait for all processes to complete execution before re-raising any unhandled exception from the child processes.
-5. Times out by default at 30 minutes. Timeout default can be changed with InParallel::InParallelExecutor.timeout=X, or you can set the timeout param when calling the method
+5. Times out by default at 30 minutes. Timeout default can be changed with InParallel::InParallelExecutor.parallel_default_timeout=X, or you can set the timeout param when calling the method
 
 ```ruby
   ["foo", "bar", "baz"].each_in_parallel { |item|
