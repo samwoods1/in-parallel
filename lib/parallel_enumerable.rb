@@ -4,9 +4,7 @@ module Enumerable
   #
   # Example - Will execute each iteration in a separate process, in parallel, log STDOUT per process, and return an array of results.
   #   my_array = [1,2,3]
-  #   my_array.each_in_parallel { |int|
-  #     my_method(int)
-  #   }
+  #   my_array.each_in_parallel { |int| my_method(int) }
   # @param [String] identifier - Optional identifier for logging purposes only. Will use the block location by default.
   # @param [Int] timeout - Seconds to wait for a forked process to complete before timing out
   # @return [Array<Object>] results - the return value of each block execution.
@@ -14,7 +12,7 @@ module Enumerable
     if InParallel::InParallelExecutor.fork_supported? && count > 1
       identifier ||= "#{caller_locations[0]}"
       each do |item|
-        out = InParallel::InParallelExecutor._execute_in_parallel(identifier) {block.call(item)}
+        InParallel::InParallelExecutor._execute_in_parallel(identifier) { block.call(item) }
       end
       # return the array of values, no need to look up from the map.
       return InParallel::InParallelExecutor.wait_for_processes(nil, block.binding, timeout, kill_all_on_error)

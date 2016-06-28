@@ -1,16 +1,16 @@
 # in-parallel
-A lightweight Ruby library with very simple syntax, making use of process.fork for parallelization
+A lightweight Ruby library with very simple syntax, making use of Process.fork to execute code in parallel.
 
-Other popular Ruby libraries that do parallel execution support one primary use case - crunching through a large queue of small tasks as quickly and efficiently as possible.  This library primarily supports the use case of executing a few larger tasks in parallel and managing the stdout and return values to make it easy to understand which processes are logging what, and what the outcome of the execution was. This library was created to be used by Puppet's Beaker test framework to enable parallel execution of some of the framework's tasks, and allow people within thier tests to execute code in parallel when wanted.  This solution does not check to see how many processors you have, it just forks as many processes as you ask for.  That means that it will handle a handful of parallel processes well, but could definitely overload your system with ruby processes if you try to spin up a LOT of processes.  If you're looking for something simple and light-weight and on either linux or mac (forking processes is not supported on Windows), then this solution could be what you want.
+Other popular Ruby libraries that do parallel execution support one primary use case - crunching through a large queue of small tasks as quickly and efficiently as possible.  This library primarily supports the use case of executing a few larger tasks in parallel and managing the stdout and return values to make it easy to understand which processes are logging what, and what the outcome of the execution was. This library was created to be used by Puppet's Beaker test framework to enable parallel execution of some of the framework's tasks, and allow users to execute code in parallel within their tests.  This solution does not check to see how many processors you have, it just forks as many processes as you ask for.  That means that it will handle a handful of parallel processes well, but could definitely overload your system with ruby processes if you try to spin up a LOT of processes.  If you're looking for something intuitive and simple, but with a slight memory and processing overhead, and are on either Linux or Mac (forking processes is not supported on Windows), then this solution is  what you want.
 
-If you are looking for something to support executing a lot of tasks in parallel as efficiently as possible, you should take a look at the [parallel](https://github.com/grosser/parallel) project.
+If you are looking for something that excels at executing a large queue of tasks in parallel as efficiently as possible, you should take a look at the [parallel](https://github.com/grosser/parallel) project.
 
 ## Methods:
 
 ### run_in_parallel(timeout=nil, kill_all_on_error = false, &block)
-1. You can put whatever methods you want to execute in parallel into a block, and each method will be executed in parallel (unless the method is defined in kernel). 
+1. Each method in a block will be executed in parallel (unless the method is defined in Kernel or BaseObject).
     1. Any methods further down the stack won't be affected, only the ones directly within the block.
-2. You can assign the results to instance variables and it just works, no dealing with an array or map of results.
+2. You can assign return values to instance variables and it 'just works'.
 3. Log STDOUT and STDERR chunked per process to the console so that it is easy to see what happened in which process.
 4. Waits for each process in realtime and logs immediately upon completion of each process
 5. If an exception is raised by a child process, it will optionally (kill_all_on_error) be re-raised in the primary process and kill all other still running child processes. The default will wait for all processes to complete execution before re-raising any unhandled exception from the child processes.
@@ -33,10 +33,10 @@ If you are looking for something to support executing a lot of tasks in parallel
   # Example:
   # will spawn 2 processes, (1 for each method) wait until they both complete, log chunked STDOUT/STDERR for
   # each process and assign the method return values to instance variables:
-  InParallel.run_in_parallel {
+  run_in_parallel do
     @result_1 = method_with_param('world')
     @result_2 = method_without_param
-  }
+  end
   
   puts "#{@result_1}, #{@result_2[:foo]}"
 ```
@@ -64,9 +64,7 @@ hello world, bar
 5. Times out by default at 30 minutes. Timeout default can be changed with InParallel::InParallelExecutor.parallel_default_timeout=X, or you can set the timeout param when calling the method
 
 ```ruby
-  ["foo", "bar", "baz"].each_in_parallel { |item|
-    puts item
-  }
+  ["foo", "bar", "baz"].each_in_parallel { |item| puts item }
 
 ```
 STDOUT:
@@ -98,14 +96,12 @@ baz
   
   def create_file_with_delay(file_path)
     sleep 2
-    File.open(file_path, 'w') { |f| f.write('contents')}
+    File.open(file_path, 'w') { |f| f.write('contents') }
     return true
   end
   
   # Example 1 - ignore results
-  run_in_background{
-    create_file_with_delay(TMP_FILE)
-  }
+  run_in_background { create_file_with_delay(TMP_FILE) }
   
   # Should not exist immediately upon block completion
   puts(File.exists?(TMP_FILE)) # false
@@ -114,15 +110,11 @@ baz
   puts(File.exists?(TMP_FILE)) # true
   
   # Example 2 - delay results
-  run_in_background(false){
-    @result = create_file_with_delay(TMP_FILE)
-  }
+  run_in_background(false) { @result = create_file_with_delay(TMP_FILE) }
   
   # Do something else
   
-  run_in_background(false){
-    @result2 = create_file_with_delay('/tmp/someotherfile.txt')
-  }
+  run_in_background(false) { @result2 = create_file_with_delay('/tmp/someotherfile.txt') }
   
   # @result has not been assigned yet
   puts @result >> "unresolved_parallel_result_0"

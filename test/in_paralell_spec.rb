@@ -7,6 +7,7 @@ class SingletonTest
   def initialize
     @test_data = [1, 2, 3]
   end
+
   def get_test_data
     @test_data
   end
@@ -14,9 +15,11 @@ end
 
 def get_singleton_class
   test = SingletonTest.new
+
   def test.someval
     "someval"
   end
+
   return test
 end
 
@@ -28,7 +31,7 @@ def method_with_param(param)
 end
 
 def method_without_param
-  ret_val = {:foo => "bar"}
+  ret_val = { :foo => "bar" }
   puts ret_val
   return ret_val
 end
@@ -39,7 +42,7 @@ end
 
 def create_file_with_delay(file_path, wait=1)
   sleep wait
-  File.open(file_path, 'w') { |f| f.write('contents')}
+  File.open(file_path, 'w') { |f| f.write('contents') }
   return true
 end
 
@@ -58,10 +61,10 @@ describe '.run_in_parallel' do
   end
 
   it 'should run methods in another process' do
-    run_in_parallel{
-      @result = get_pid
+    run_in_parallel do
+      @result  = get_pid
       @result2 = get_pid
-    }
+    end
 
     expect(@result).to_not eq(Process.pid)
     expect(@result2).to_not eq(Process.pid)
@@ -70,54 +73,52 @@ describe '.run_in_parallel' do
   it 'should return correct values' do
     start_time = Time.now
 
-    run_in_parallel{
+    run_in_parallel do
       @result_from_test = method_with_param('blah')
-      @result_2 = method_without_param
-    }
+      @result_2         = method_without_param
+    end
     # return values for instance variables should be set correctly
     expect(@result_from_test).to eq 'bar + blah'
     # should be able to return objects (not just strings)
-    expect(@result_2).to eq({:foo => "bar"})
+    expect(@result_2).to eq({ :foo => "bar" })
   end
 
   it "should return a singleton class value" do
 
-    run_in_parallel{
-      @result = get_singleton_class
-    }
+    run_in_parallel { @result = get_singleton_class }
 
     expect(@result.get_test_data).to eq([1, 2, 3])
   end
 
   it "should raise an exception and return immediately with kill_all_on_error and one of the processes errors." do
-    expect{run_in_parallel(nil, true){
-      @result = get_singleton_class
+    expect { run_in_parallel(nil, true) do
+      @result   = get_singleton_class
       @result_2 = raise_an_error
       @result_3 = create_file_with_delay(TMP_FILE)
-    }}.to raise_error StandardError
+    end }.to raise_error StandardError
 
     expect(@result_3).to_not eq(true)
   end
 
   it "should raise an exception and let all processes complete when one of the processes errors." do
-    expect{run_in_parallel(nil, false){
-      @result = get_singleton_class
+    expect { run_in_parallel(nil, false) do
+      @result   = get_singleton_class
       @result_2 = raise_an_error
       @result_3 = create_file_with_delay(TMP_FILE)
-    }}.to raise_error StandardError
+    end }.to raise_error StandardError
 
     expect(@result_3).to eq(true)
   end
 
   it "should not run in parallel if forking is not supported" do
     InParallel::InParallelExecutor.class_variable_set(:@@supported, nil)
-    expect(Process).to receive( :respond_to? ).with( :fork ).and_return( false ).once
-    expect(InParallel::InParallelExecutor.logger).to receive( :warn ).with("Warning: Fork is not supported on this OS, executing block normally")
+    expect(Process).to receive(:respond_to?).with(:fork).and_return(false).once
+    expect(InParallel::InParallelExecutor.logger).to receive(:warn).with("Warning: Fork is not supported on this OS, executing block normally")
 
-    run_in_parallel{
+    run_in_parallel do
       @result_from_test = method_with_param('blah')
-      @result_2 = get_pid
-    }
+      @result_2         = get_pid
+    end
 
     expect(@result_from_test).to eq 'bar + blah'
     expect(@result_2).to eq Process.pid
@@ -136,9 +137,7 @@ describe '.run_in_background' do
   end
 
   it 'should run in the background' do
-    run_in_background{
-      @result = create_file_with_delay(TMP_FILE)
-    }
+    run_in_background { @result = create_file_with_delay(TMP_FILE) }
 
     # Should not exist immediately upon block completion
     expect(File.exists? TMP_FILE).to eq false
@@ -148,9 +147,7 @@ describe '.run_in_background' do
   end
 
   it 'should allow you to get results if ignore_results is false' do
-    @block_result = run_in_background(false){
-      @result = create_file_with_delay(TMP_FILE)
-    }
+    @block_result = run_in_background(false) { @result = create_file_with_delay(TMP_FILE) }
     wait_for_processes
     # We should get the correct value assigned for the method result
     expect(@result).to eq true
@@ -164,64 +161,59 @@ describe '.wait_for_processes' do
     InParallel::InParallelExecutor.parallel_default_timeout = 1200
   end
   it 'should timeout when the default timeout value is hit' do
-    @block_result = run_in_background(false){
+    @block_result                                           = run_in_background(false) do
       @result = create_file_with_delay(TMP_FILE, 30)
-    }
+    end
     InParallel::InParallelExecutor.parallel_default_timeout = 0.1
-    expect{wait_for_processes}.to raise_error RuntimeError
+    expect { wait_for_processes }.to raise_error RuntimeError
   end
 
   it 'should timeout when a specified timeout value is hit' do
-    @block_result = run_in_background(false){
-      @result = create_file_with_delay(TMP_FILE, 30)
+    @block_result = run_in_background(false) do
+      @result  = create_file_with_delay(TMP_FILE, 30)
       @result2 = method_without_param
-    }
-    expect{wait_for_processes(0.1)}.to raise_error RuntimeError
+    end
+    expect { wait_for_processes(0.1) }.to raise_error RuntimeError
   end
 end
 
 describe '.each_in_parallel' do
   it 'should run each iteration in a separate process' do
-    pids = [1,2,3].each_in_parallel {|item|
-      Process.pid
-    }
-    expect(pids.detect{ |pid| pids.count(pid) > 1 }).to be_nil
+    pids = [1, 2, 3].each_in_parallel { Process.pid }
+    expect(pids.detect { |pid| pids.count(pid) > 1 }).to be_nil
   end
 
   it 'should return correct values' do
     start_time = Time.now
-    items = ['foo', 'bar', 'baz'].each_in_parallel {|item|
-      puts item
+    items      = ['foo', 'bar', 'baz', 'blah', 'foobar'].each_in_parallel do |item|
+      sleep(Random.rand(1.0))
       item
-    }
-    # return values should be an array of the returned items in the last line of the block
-    expect(items <=> ['foo', 'bar', 'baz']).to eq 0
+    end
+    # return values should be an array of the returned items in the last line of the block, in correct order
+    expect(['foo', 'bar', 'baz', 'blah', 'foobar']).to eq(items)
     # time should be less than combined delay in the 3 block calls
-    expect(expect(Time.now - start_time).to be < 3)
+    expect(expect(Time.now - start_time).to be < 5)
   end
 
   it 'should run each iteration of a map in parallel' do
-    start_time = Time.now
-    items = ['foo', 'bar', 'baz'].map.each_in_parallel {|item|
+    items = ['foo', 'bar', 'baz'].map.each_in_parallel do |item|
       puts item
       item
-    }
-    # return values should be an array of the returned items in the last line of the block
-    expect(items <=> ['foo', 'bar', 'baz']).to eq 0
+    end
+    # return values should be an array of the returned items in the last line of the block, in correct order
+    expect(items).to eq(['foo', 'bar', 'baz'])
   end
 
   it 'should not run in parallel if there is only 1 item in the enumerator' do
-    expect {["foo"].each_in_parallel{|item|
-      puts item
-    }}.to_not output(/forked process for/).to_stdout
-
+    expect(InParallel::InParallelExecutor.logger).to_not receive(:info).with(/Forked process for/)
+    expect(["foo"].map.each_in_parallel { Process.pid }[0]).to eq(Process.pid)
   end
 
   it 'should allow you to specify the method_sym' do
-    allow(InParallel::InParallelExecutor.logger).to receive( :info ).with(anything())
-    expect(InParallel::InParallelExecutor.logger).to receive( :info ).with(/Forked process for my_method/).exactly(3).times
+    allow(InParallel::InParallelExecutor.logger).to receive(:info).with(anything())
+    expect(InParallel::InParallelExecutor.logger).to receive(:info).with(/Forked process for my_method/).exactly(3).times
 
-    [1,2,3].each_in_parallel('my_method'){|item|
+    [1, 2, 3].each_in_parallel('my_method') { |item|
       puts item
     }
   end
