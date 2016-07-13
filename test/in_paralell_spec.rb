@@ -13,6 +13,24 @@ class SingletonTest
   end
 end
 
+class SingletonWrapper
+  def initialize
+    @instance_var = get_singleton_class
+    singleton_class.class_eval do
+      @@x = "foo"
+      @x = 'bar'
+    end
+  end
+
+  def get_instance_var
+    @instance_var
+  end
+end
+
+def get_wrapper
+  SingletonWrapper.new
+end
+
 def get_singleton_class
   test = SingletonTest.new
 
@@ -88,6 +106,11 @@ describe '.run_in_parallel' do
     run_in_parallel { @result = get_singleton_class }
 
     expect(@result.get_test_data).to eq([1, 2, 3])
+  end
+
+  it "should return an object with an instance variable set to an object containing singleton methods" do
+    run_in_parallel { @result = get_wrapper }
+    expect(@result.get_instance_var.get_test_data).to eq([1, 2, 3])
   end
 
   it "should raise an exception and return immediately with kill_all_on_error and one of the processes errors." do

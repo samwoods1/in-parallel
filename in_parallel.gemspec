@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
       "processes if you try to spin up a LOT of processes. If you're looking for something simple and " +
       "light-weight and on either linux or mac (forking processes is not supported on Windows), then this " +
       "solution could be what you want."
-  spec.homepage      = "https://github.com/samwoods1/in-parallel"
+  spec.homepage      = "https://github.com/puppetlabs/in-parallel"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }

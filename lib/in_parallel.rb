@@ -104,9 +104,11 @@ module InParallel
     def self.wait_for_processes(proxy = self, binding = nil, timeout = nil, kill_all_on_error = false)
       raise_error = nil
       timeout     ||= @@parallel_default_timeout
+      send_int = false
       trap(:INT) do
         # Can't use logger inside of trap
         puts "Warning, recieved interrupt.  Processing child results and exiting."
+        send_int = true
         kill_child_processes
       end
       return unless Process.respond_to?(:fork)
@@ -170,12 +172,12 @@ module InParallel
       @@background_objs.each { |obj| result_lookup(obj[:proxy], obj[:target], results_map) }
       @@background_objs.clear
 
+      Process.kill("INT", Process.pid) if send_int
       raise raise_error unless raise_error.nil?
-
       return results
     end
 
-    # private method to execute some code in a separate process and store the STDOUT and STDERR for later retrieval
+    # private method to execute a block of code in a separate process and store the STDOUT and return value for later retrieval
     def self._execute_in_parallel(method_sym, obj = self, &block)
       ret_val                   = nil
       # Communicate the return value of the method or block
@@ -201,26 +203,17 @@ module InParallel
           # close subprocess's copy of read_result since it only needs to write
           read_result.close
           ret_val = obj.instance_eval(&block)
-          # Write the result to the write_result IO stream.
-          # Have to serialize the value so it can be transmitted via IO
-          if (!ret_val.nil? && ret_val.singleton_methods && ret_val.class != TrueClass && ret_val.class != FalseClass && ret_val.class != Fixnum)
-            #in case there are other types that can't be duped
-            begin
-              ret_val = ret_val.dup
-            rescue StandardError => err
-              @@logger.warn "Warning: return value from child process #{ret_val} " +
-                                "could not be transferred to parent process: #{err.message}"
-            end
-          end
+          ret_val = strip_singleton(ret_val)
           # In case there are other types that can't be dumped
           begin
+            # Write the result to the write_result IO stream.
             Marshal.dump(ret_val, write_result) unless ret_val.nil?
           rescue StandardError => err
             @@logger.warn "Warning: return value from child process #{ret_val} " +
                               "could not be transferred to parent process: #{err.message}"
           end
         rescue Exception => err
-          @@logger.error "Error in process #{pid}: #{err.message}"
+          @@logger.error "Error in process #{Process.pid}: #{err.message}"
           # Return the error if an error is rescued so we can re-throw in the main process.
           Marshal.dump(err, write_result)
           exit_status = 1
@@ -264,8 +257,26 @@ module InParallel
         end
       end
     end
-
     private_class_method :kill_child_processes
+
+    def self.strip_singleton(obj)
+      unless (obj.nil? || obj.singleton_methods.empty?)
+        obj = obj.dup
+      end
+      begin
+        obj.singleton_class.class_eval do
+          instance_variables.each { |v| instance_eval("remove_instance_variable(:#{v})") }
+        end
+      rescue TypeError # if no singleton_class exists for the object it raises a TypeError
+      end
+
+      # Recursively check any objects assigned to instance variables for singleton methods, or variables
+      obj.instance_variables.each do |v|
+        obj.instance_variable_set(v, strip_singleton(obj.instance_variable_get(v)))
+      end
+      obj
+    end
+    private_class_method :strip_singleton
 
     # Private method to lookup results from the results_map and replace the
     # temp values with actual return values
