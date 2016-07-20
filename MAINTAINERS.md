@@ -6,3 +6,4 @@ will be reviewing & merging PRs to the project.
 | Name           | Github                                              | Email                       |
 |:--------------:|:---------------------------------------------------:|:---------------------------:|
 | Sam Woods      | [samwoods1](https://github.com/samwoods1)           | <sam.woods@puppet.com>      |
+| Zach Reichert  | [zreichert](https://github.com/zreichert)           | <zach.reichert@puppet.com>  |
