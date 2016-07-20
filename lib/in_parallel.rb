@@ -182,8 +182,8 @@ module InParallel
       ret_val                   = nil
       # Communicate the return value of the method or block
       read_result, write_result = IO.pipe
+      Dir.mkdir('tmp') unless Dir.exists? 'tmp'
       pid                       = fork do
-        Dir.mkdir('tmp') unless Dir.exists? 'tmp'
         stdout_file = File.new("tmp/pp_#{Process.pid}", 'w')
         exit_status = 0
         trap(:INT) do
