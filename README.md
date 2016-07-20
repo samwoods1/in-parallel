@@ -13,6 +13,7 @@ If you are looking for something that excels at executing a large queue of tasks
 ```include InParallel``` to use as a mix-in
 
 The methods below allow you to fork processes to execute multiple methods or blocks within an enumerable in parallel.  They all have this common behavior:
+
 1. STDOUT is captured for each forked process and logged all at once when the process completes or is terminated.
 1. By default execution of processes in parallel will wait until execution of all processes are complete before continuing (with the exception of run_in_background).
     1. You can specify the parameter kill_all_on_error=true if you want to immediately exit all forked processes when an error executing any of the forked processes occurs.
