@@ -10,7 +10,7 @@ module Enumerable
   # @return [Array<Object>] results - the return value of each block execution.
   def each_in_parallel(identifier=nil, timeout=(InParallel::InParallelExecutor.parallel_default_timeout), kill_all_on_error = false, &block)
     if InParallel::InParallelExecutor.fork_supported? && count > 1
-      identifier ||= "#{caller_locations[0]}"
+      identifier ||= "#{caller[0]}"
       each do |item|
         InParallel::InParallelExecutor._execute_in_parallel(identifier) { block.call(item) }
       end
