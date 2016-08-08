@@ -1,5 +1,5 @@
 require 'rspec'
-require_relative('../lib/in_parallel')
+require_relative('../lib/in-parallel')
 include InParallel
 TMP_FILE = Dir.mktmpdir + 'test_file.txt'
 
