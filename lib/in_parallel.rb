@@ -313,7 +313,7 @@ module InParallel
       # All methods within the block should show up as missing (unless defined in :Kernel)
       def method_missing(method_sym, *args, &block)
         if InParallelExecutor.main_pid == ::Process.pid
-          out = InParallelExecutor._execute_in_parallel("'#{method_sym.to_s}' #{caller_locations[0].to_s}",
+          out = InParallelExecutor._execute_in_parallel("'#{method_sym.to_s}' #{caller[0].to_s}",
                                                         @object.eval('self')) { send(method_sym, *args, &block) }
           out[:tmp_result]
         end

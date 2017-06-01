@@ -1,14 +1,13 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'in_parallel/version'
+require 'in-parallel/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "in-parallel"
   spec.version       = InParallel::VERSION
   spec.authors       = ["samwoods1"]
   spec.email         = ["sam.woods@puppetlabs.com"]
-
   spec.summary       = "A lightweight library to execute a handful of tasks in parallel with simple syntax"
   spec.description   = "Many other Ruby libraries that simplify parallel execution support one primary use case - " +
       "crunching through a large queue of small, similar tasks as quickly and efficiently as possible.  This library " +
@@ -19,9 +18,6 @@ Gem::Specification.new do |spec|
   spec.homepage      = "https://github.com/puppetlabs/in-parallel"
   spec.license       = "MIT"
 
-  spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
-  spec.bindir        = "exe"
-  spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
-  spec.require_paths = ["lib"]
+  spec.files         = Dir['[A-Z]*[^~]'] + Dir['lib/**/*.rb'] + Dir['spec/*']
 
 end

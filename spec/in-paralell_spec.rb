@@ -1,7 +1,7 @@
 require 'rspec'
 require_relative('../lib/in_parallel')
 include InParallel
-TMP_FILE = '/tmp/test_file.txt'
+TMP_FILE = Dir.mktmpdir + 'test_file.txt'
 
 class SingletonTest
   def initialize
@@ -58,7 +58,7 @@ def simple_puts(my_string)
   puts my_string
 end
 
-def create_file_with_delay(file_path, wait=1)
+def create_file_with_delay(file_path, wait=2)
   sleep wait
   File.open(file_path, 'w') { |f| f.write('contents') }
   return true
@@ -162,11 +162,19 @@ describe '.run_in_background' do
   it 'should run in the background' do
     run_in_background { @result = create_file_with_delay(TMP_FILE) }
 
+    start = Time.now
     # Should not exist immediately upon block completion
     expect(File.exists? TMP_FILE).to eq false
-    sleep(2)
+    # Give this some time to complete since it takes longer on the vmpooler vms
+    file_exists = false
+    while Time.now < start + 10 do
+      if File.exists? TMP_FILE
+        file_exists = true
+        break
+      end
+    end
     # Should exist once the delay in create_file_with_delay is done
-    expect(File.exists? TMP_FILE).to eq true
+    expect(file_exists).to eq true
   end
 
   it 'should allow you to get results if ignore_results is false' do
@@ -180,7 +188,6 @@ end
 
 describe '.wait_for_processes' do
   after do
-    puts "got to after"
     InParallel::InParallelExecutor.parallel_default_timeout = 1200
   end
   it 'should timeout when the default timeout value is hit' do

@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 # in the Rakefile, so we require it in all groups
-gem 'rspec'                ,'~> 3.5'
+gem 'rspec'                ,'~> 3.1.0'
 
 group :development do
   gem 'simplecov'
